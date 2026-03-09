@@ -1,0 +1,5 @@
+# agent_id,name,role_template,model
+product-manager,Product Manager,product-manager.md,moonshot/kimi-k2.5
+frontend-developer,Frontend Developer,frontend-developer.md,moonshot/kimi-k2.5
+backend-developer,Backend Developer,backend-developer.md,moonshot/kimi-k2.5
+qa-tester,QA Tester,qa-tester.md,moonshot/kimi-k2.5
