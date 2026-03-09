@@ -1,107 +1,110 @@
-# OpenClaw Docker + Agent Team
+# OpenClaw Swarm Studio
 
-这个仓库提供两部分能力：
-- 单实例 OpenClaw（Docker）
-- Agent Team（主 Agent + 多子 Agent）模板，可开源复用和自定义
+多容器 OpenClaw 蜂群 + 可视化控制台（React）。
 
-## 1) 准备环境变量
+你现在有两层能力：
+- `swarm/*.json` + `scripts/swarm-*.sh`：管理 5 个独立 OpenClaw 实例
+- `Swarm Studio` Web：聊天室、@协作、配置编辑、状态看板、运维设置
 
-```bash
-cp .env.example .env
-```
+## 功能
 
-编辑 `.env`：
-- `OPENCLAW_GATEWAY_TOKEN`：随机字符串（可用 `openssl rand -hex 32` 生成）
-- `MOONSHOT_API_KEY`：你的 Kimi/Moonshot token
+- 多页面控制台（React）
+- Chatroom：@某个 agent 触发回复；agent 回复里 @其他 agent 会继续接力
+- Dashboard：查看每个龙虾实例状态（容器/健康/端口/WhatsApp）
+- Config：按 agent 编辑任意 `.md`（如 `USER.md`、`SOUL.md`）
+- Settings：一键启动/停止蜂群、批准 pairing、清理旧实例、调 relay 参数
+- Runs：查看后台执行日志
+- SQLite 持久化：会话消息、设置、运行日志
 
-## 2) 启动网关
+## 数据存储
 
-```bash
-docker compose up -d openclaw-gateway
-```
+- 应用数据库：`data/app/studio.db`
+- 每个 agent 配置：`data/swarm/<agent_id>/config/openclaw.json`
+- 每个 agent 工作区：`data/swarm/<agent_id>/workspace/*.md`
+- 共享代码仓库（所有 agent 共用）：容器内默认路径 `/home/node/shared-repo`（宿主机默认映射当前项目根目录）
 
-## 3) 初始化配置（只需一次）
+## 共享宿主仓库协作
 
-```bash
-docker compose run --rm openclaw-cli config set gateway.mode local
-docker compose run --rm openclaw-cli config set models.mode merge
-docker compose run --rm openclaw-cli config set agents.defaults.model.primary moonshot/kimi-k2.5
-docker compose up -d openclaw-gateway
-```
-
-## 4) 验证
+- 默认已启用：所有 agent 容器都挂载同一份宿主机仓库，可共同修改代码。
+- 若要改成其他宿主机目录，在 `.env` 设置：
 
 ```bash
-docker compose run --rm openclaw-cli models list
-env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY curl -fsS http://127.0.0.1:18789/healthz
-docker compose run --rm openclaw-cli dashboard --no-open
+SWARM_SHARED_REPO_PATH=/absolute/path/to/your/repo
 ```
 
-预期：
-- `models list` 中有 `moonshot/kimi-k2.5`
-- `healthz` 返回 `{"ok":true,"status":"live"}`
+- 修改后执行 `./scripts/swarm-up.sh` 使挂载生效。
 
-## 5) 访问
-
-- Gateway API: `http://localhost:18789`
-- Dashboard（推荐）：执行 `docker compose run --rm openclaw-cli dashboard --no-open`，打开输出的完整 URL（包含 `#token=...`）
-- Bridge（内部通道）：`http://localhost:18790`（不是控制台页面）
-
-说明：
-- 如果你把宿主机端口改成非默认值（例如 `28789`），`dashboard --no-open` 可能仍显示容器内默认端口 `18789`。此时请把 URL 里的端口替换成你 `.env` 里的 `OPENCLAW_GATEWAY_PORT`。
-
-## 6) 停止
+## 启动蜂群（容器层）
 
 ```bash
-docker compose down
+./scripts/swarm-up.sh
 ```
 
-## 7) 初始化 Agent Team（蜂群）
-
-默认团队角色定义在 `teams/team.agents.csv`，包含：
-- 产品经理（product-manager）
-- 前端开发（frontend-developer）
-- 后端开发（backend-developer）
-- 测试（qa-tester）
-
-执行一键初始化：
+停止：
 
 ```bash
-chmod +x scripts/bootstrap-team.sh
-./scripts/bootstrap-team.sh
+./scripts/swarm-down.sh
 ```
 
-查看 Agent 列表：
+## 启动 Web 控制台
+
+先安装依赖：
 
 ```bash
-docker compose run --rm openclaw-cli agents list --json
+npm install
 ```
 
-脚本会做这些事：
-- 给主 Agent workspace 生成 `MAIN_AGENT_PLAYBOOK.md`、`TEAM_CHARTER.md`
-- 为每个子 Agent 创建独立 workspace
-- 为每个子 Agent 写入角色 `USER.md`
-- 幂等创建 Agent（已存在则跳过）
+开发模式（推荐两个终端）：
 
-## 8) 自定义你的蜂群
+```bash
+# 终端 1
+npm run dev:server
 
-编辑 `teams/team.agents.csv` 即可：
-
-```csv
-# agent_id,name,role_template,model
-product-manager,Product Manager,product-manager.md,moonshot/kimi-k2.5
-frontend-developer,Frontend Developer,frontend-developer.md,moonshot/kimi-k2.5
-backend-developer,Backend Developer,backend-developer.md,moonshot/kimi-k2.5
-qa-tester,QA Tester,qa-tester.md,moonshot/kimi-k2.5
+# 终端 2
+npm run dev:web
 ```
 
-模板位置：
-- 主 Agent 编排模板：`teams/templates/main-agent-playbook.md`
-- 团队章程模板：`teams/templates/team-charter.md`
-- 角色模板：`teams/templates/roles/*.md`
+访问：
+- 前端：`http://127.0.0.1:5174`
+- 后端 API：`http://127.0.0.1:3099`
 
-更多自定义方式见 `teams/README.md`。
+生产模式：
 
-## 开源说明
+```bash
+npm run build:web
+npm start
+```
 
-本仓库推荐直接 fork 后按你的业务改模板和 CSV，即可快速创建自己的 Agent Team。
+## 关键页面说明
+
+- Chatroom：
+  - 直接输入并 `@main`、`@frontend-developer` 等
+  - 不带 @ 时默认派发给 `@main`
+  - relay 规则由 settings 的 `relay.maxDepth`、`relay.maxDispatch` 控制
+
+- Config：
+  - 先选 agent，再选文件
+  - 可新建 `.md`，例如 `SOUL.md`
+
+- Settings：
+  - `One-Click Start Swarm`
+  - `Approve Pairing`（遇到 `pairing required` 时使用）
+  - 每个 agent 的 WhatsApp 登录命令
+
+## WhatsApp
+
+每个 agent 可单独登录：
+
+```bash
+./scripts/swarm-whatsapp-login.sh main
+./scripts/swarm-whatsapp-login.sh product-manager
+./scripts/swarm-whatsapp-login.sh frontend-developer
+./scripts/swarm-whatsapp-login.sh backend-developer
+./scripts/swarm-whatsapp-login.sh qa-tester
+```
+
+若 UI 出现 `pairing required`：
+
+```bash
+./scripts/swarm-approve-pairing.sh
+```

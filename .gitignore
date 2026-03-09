@@ -1,3 +1,8 @@
 .env
 data/
 .DS_Store
+docker-compose.swarm.yml
+team-runs/
+node_modules/
+web/dist/
+.run/

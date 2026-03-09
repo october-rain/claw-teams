@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "defaults": {
+    "image": "ghcr.io/openclaw/openclaw:latest",
+    "gatewayBind": "lan",
+    "dataRoot": "./data/swarm",
+    "defaultModel": "moonshot/kimi-k2.5",
+    "providerConfig": {
+      "moonshot": {
+        "baseUrl": "https://api.moonshot.cn/v1",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "kimi-k2.5",
+            "name": "Kimi K2.5",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 250000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    },
+    "gatewayControlUi": {
+      "dangerouslyAllowHostHeaderOriginFallback": true,
+      "allowInsecureAuth": true
+    },
+    "sharedRepo": {
+      "enabled": true,
+      "hostPath": ".",
+      "mountPath": "/home/node/shared-repo"
+    },
+    "whatsapp": {
+      "enabled": false,
+      "dmPolicy": "open",
+      "groupPolicy": "open",
+      "selfChatMode": true,
+      "allowFrom": [
+        "*"
+      ],
+      "debounceMs": 0,
+      "mediaMaxMb": 50
+    }
+  },
+  "agents": [
+    {
+      "id": "main",
+      "name": "Main Agent",
+      "role": "团队协调与交付负责人",
+      "personality": "理性、务实、注重节奏与风险控制",
+      "responsibilities": [
+        "需求拆解与优先级管理",
+        "跨角色协作编排",
+        "结果整合与最终交付"
+      ],
+      "model": "moonshot/kimi-k2.5",
+      "ports": {
+        "gateway": 28789,
+        "bridge": 28790
+      },
+      "whatsapp": {
+        "enabled": false,
+        "account": "main"
+      }
+    },
+    {
+      "id": "product-manager",
+      "name": "Product Manager",
+      "role": "产品经理",
+      "personality": "用户价值导向、结构化思考",
+      "responsibilities": [
+        "业务目标澄清",
+        "需求范围定义",
+        "验收标准制定"
+      ],
+      "model": "moonshot/kimi-k2.5",
+      "ports": {
+        "gateway": 28791,
+        "bridge": 28792
+      },
+      "whatsapp": {
+        "enabled": false,
+        "account": "pm"
+      }
+    },
+    {
+      "id": "frontend-developer",
+      "name": "Frontend Developer",
+      "role": "前端开发",
+      "personality": "注重体验与可维护性",
+      "responsibilities": [
+        "界面与交互实现",
+        "状态管理与性能优化",
+        "前端工程规范落地"
+      ],
+      "model": "moonshot/kimi-k2.5",
+      "ports": {
+        "gateway": 28793,
+        "bridge": 28794
+      },
+      "whatsapp": {
+        "enabled": false,
+        "account": "frontend"
+      }
+    },
+    {
+      "id": "backend-developer",
+      "name": "Backend Developer",
+      "role": "后端开发",
+      "personality": "稳定性优先、接口契约清晰",
+      "responsibilities": [
+        "API 设计与实现",
+        "数据模型与迁移",
+        "可靠性与安全保障"
+      ],
+      "model": "moonshot/kimi-k2.5",
+      "ports": {
+        "gateway": 28795,
+        "bridge": 28796
+      },
+      "whatsapp": {
+        "enabled": false,
+        "account": "backend"
+      }
+    },
+    {
+      "id": "qa-tester",
+      "name": "QA Tester",
+      "role": "测试工程师",
+      "personality": "严谨、覆盖边界场景",
+      "responsibilities": [
+        "测试计划制定",
+        "用例执行与回归",
+        "质量门禁评估"
+      ],
+      "model": "moonshot/kimi-k2.5",
+      "ports": {
+        "gateway": 28797,
+        "bridge": 28798
+      },
+      "whatsapp": {
+        "enabled": false,
+        "account": "qa"
+      }
+    }
+  ]
+}
